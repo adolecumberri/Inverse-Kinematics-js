@@ -53,8 +53,26 @@ function inverseKinematic() {
                 y: ty - this.a.y
             }
 
-            if(mouseX && mouseY)
-            this.angle = Math.atan2(ty - this.a.y, tx - this.a.x)
+            if(tx && ty){
+                this.angle = Math.atan2(ty - this.a.y, tx - this.a.x)
+
+                //current Magnitude. (length of the vector)
+                let currentMagnitude = Math.sqrt(dir.x * dir.x + dir.y * dir.y)
+                //updates vector Magnitude
+                dir.x = dir.x * this.len / currentMagnitude
+                dir.y = dir.y * this.len / currentMagnitude
+                //invert vector direction
+                dir.x *= -1
+                dir.y *= -1
+    
+                //actualizacion del punto A
+                this.a = {
+                    x: tx + dir.x,
+                    y: ty + dir.y
+                }
+            }
+          
+
         }
         update() {
             this.calculateB()
@@ -86,7 +104,7 @@ function inverseKinematic() {
         show() {
             this.ctx.fillRect(0, 0, 500, 500)
             this.paingLine()
-            this.paintHelp()
+            // this.paintHelp()
         }
     }
 
@@ -95,7 +113,7 @@ function inverseKinematic() {
     //general update.
     const update = () => {
         ctx.fillStyle = '#515151'
-        // seg.follow(mouseX, mouseY)
+        seg.follow(mouseX, mouseY)
         seg.update()
         seg.show()
         setTimeout(update, 16);
@@ -110,19 +128,10 @@ function inverseKinematic() {
     //     canvasWidth = window.innerWidth
     // }
 
-    function debounce(func, time = 300) {
-        var timer;
-        return function (event) {
-            if (timer) clearTimeout(timer);
-            timer = setTimeout(func, time, event);
-        };
-    }
-
     (function () {
         // window.onresize = debounce(resize);
         // resize();
         canvas.addEventListener('mousemove', (event) => {
-            console.log(event)
             mouseX = event.offsetX
             mouseY = event.offsetY
         });
