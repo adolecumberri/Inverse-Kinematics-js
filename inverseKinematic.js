@@ -1,4 +1,6 @@
 
+let seg
+
 function inverseKinematic() {
 
     let startTime = new Date().getTime(); //timer starts
@@ -7,7 +9,7 @@ function inverseKinematic() {
 
     let mouseX
     let mouseY
-    
+
     canvas.style.backgroundColor = '#515151'
     // ctx.fillStyle = '#ffffff';
 
@@ -15,18 +17,24 @@ function inverseKinematic() {
         //a and b are points of vector.
         a = { x: 0, y: 0 }; //Pvector
         b = { x: 0, y: 0 }; //Pvector
-        angle;
+        angle = 0;
         len;
-        constructor({ x, y, len, angle, ctx }) {
-            this.x = x
-            this.y = y
-
-            this.a.x = x
-            this.a.y = y
+        parent = null;
+        child = null;
+        constructor({ parent, x, y, len, angle, ctx }) {
             this.len = len
             this.angle = angle
             this.ctx = ctx
 
+            if (parent) {
+                this.parent = parent
+                this.a.x = parent.b.x
+                this.a.y = parent.b.y
+                // this.follow(parent.a.x, parent.b.y)
+            } else {
+                this.a.x = x
+                this.a.y = y
+            }
             this.calculateB()
         }
 
@@ -38,6 +46,7 @@ function inverseKinematic() {
         }
 
         paingLine() {
+
             this.ctx.beginPath()
             this.ctx.moveTo(this.a.x, this.a.y)
             this.ctx.lineTo(this.b.x, this.b.y)
@@ -48,13 +57,25 @@ function inverseKinematic() {
 
         //target X and target Y
         follow(tx, ty) {
-            let dir = {
-                x: tx - this.a.x,
-                y: ty - this.a.y
+
+
+            let dir, targetX, targetY
+
+            if (tx === undefined && ty === undefined) {
+                dir = {
+                    x: tx - this.a.x,
+                    y: ty - this.a.y
+                }
+            } else {
+                if(!this.child) debugger
+              targetX = this.child.a.x
+              targetY = this.child.a.y  
+              this.follow(targetX, targetY)
             }
 
-            if(tx && ty){
-                this.angle = Math.atan2(ty - this.a.y, tx - this.a.x)
+//check error here
+            if (tx && ty) {
+                this.angle = Math.atan2(dir.y, dir.x)
 
                 //current Magnitude. (length of the vector)
                 let currentMagnitude = Math.sqrt(dir.x * dir.x + dir.y * dir.y)
@@ -64,14 +85,14 @@ function inverseKinematic() {
                 //invert vector direction
                 dir.x *= -1
                 dir.y *= -1
-    
+
                 //actualizacion del punto A
                 this.a = {
                     x: tx + dir.x,
                     y: ty + dir.y
                 }
             }
-          
+
 
         }
         update() {
@@ -93,29 +114,56 @@ function inverseKinematic() {
             this.ctx.lineWidth = 1
             ctx.strokeStyle = "#FFFFFF";
             this.ctx.stroke()
+
             this.ctx.beginPath()
             this.ctx.moveTo(this.b.x, this.b.y)
             this.ctx.lineTo(mouseX, mouseY)
-
             this.ctx.lineWidth = 1
             ctx.strokeStyle = "#FFFFFF";
             this.ctx.stroke()
         }
         show() {
-            this.ctx.fillRect(0, 0, 500, 500)
+            // this.ctx.fillRect(0, 0, 500, 500)
             this.paingLine()
             // this.paintHelp()
         }
     }
 
-    let seg = new Segment({ x: 200, y: 300, len: 100, angle: 0, ctx })
+    // let seg2 = new Segment({ parent: seg, len: 100, angle: 10, ctx })
+    let current = new Segment({ x: 200, y: 300, len: 100, angle: -45, ctx })
+
+    for (let i = 0; i < 3; i++) {
+        let next = new Segment({ parent: current, len: 100, angle: 1, ctx })
+        current.child = next
+        current = next
+    }
+
+    seg = current
 
     //general update.
     const update = () => {
         ctx.fillStyle = '#515151'
-        seg.follow(mouseX, mouseY)
-        seg.update()
-        seg.show()
+        ctx.fillRect(0, 0, 500, 500)
+
+        let next = seg
+        next.follow(mouseX, mouseY)
+        next = next.parent
+        while (next != null) {
+            next.update()
+            next.show()
+            next.follow()
+            next = next.parent
+        }
+
+        // seg.update()
+        // seg.show()
+
+        // seg2.follow(mouseX, mouseY)
+        // seg2.update()
+        // seg2.show()
+
+        // seg2.follow(mouseX, mouseY)
+        // seg.follow(seg2.a.x, seg2.a.y)
         setTimeout(update, 16);
     };
 
