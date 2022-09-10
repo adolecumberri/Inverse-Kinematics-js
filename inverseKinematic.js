@@ -110,9 +110,9 @@ function inverseKinematic() {
     }
 
     let create = () => {
-        let current = new Segment({ x: 400, y: 400, len: 10, ctx, id: -1, stokeWeight: 0 })
-        for (let i = 0; i < 20; i++) {
-            let next = new Segment({ parent: current, len: 10, ctx, id: i, stokeWeight: Math.ceil(i / 2) })
+        let current = new Segment({ x: 400, y: 400, len: 5, ctx, id: -1, stokeWeight: 0 })
+        for (let i = 0; i < 100; i++) {
+            let next = new Segment({ parent: current, len: 5, ctx, id: i, stokeWeight: i / 10 })
             current.child = next
             current = next
         }
