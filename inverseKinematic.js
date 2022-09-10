@@ -1,30 +1,30 @@
 
-let seg
 
 function inverseKinematic() {
-
-    let startTime = new Date().getTime(); //timer starts
+    let tail
     let canvas = document.getElementById("canvas"); //create canvas
     let ctx = canvas.getContext("2d");
 
-    let mouseX
-    let mouseY
+    let mouseX = 0
+    let mouseY = 0
 
     canvas.style.backgroundColor = '#515151'
-    // ctx.fillStyle = '#ffffff';
 
     class Segment {
         //a and b are points of vector.
-        a = { x: 0, y: 0 }; //Pvector
-        b = { x: 0, y: 0 }; //Pvector
-        angle = 0;
-        len;
-        parent = null;
-        child = null;
-        constructor({ parent, x, y, len, angle, ctx }) {
+        a = { x: 0, y: 0 } //Pvector
+        b = { x: 0, y: 0 } //Pvector
+        len
+        parent = null
+        child = null
+        id = undefined
+        stokeWeight = undefined
+        constructor({ parent, x, y, len, ctx, id, stokeWeight = 2 }) {
             this.len = len
-            this.angle = angle
+            this.angle = 0
             this.ctx = ctx
+            this.id = id
+            this.stokeWeight = stokeWeight
 
             if (parent) {
                 this.parent = parent
@@ -46,11 +46,10 @@ function inverseKinematic() {
         }
 
         paingLine() {
-
             this.ctx.beginPath()
             this.ctx.moveTo(this.a.x, this.a.y)
             this.ctx.lineTo(this.b.x, this.b.y)
-            this.ctx.lineWidth = 4
+            this.ctx.lineWidth = this.stokeWeight
             ctx.strokeStyle = "#FFFFFF";
             this.ctx.stroke()
         }
@@ -58,45 +57,26 @@ function inverseKinematic() {
         //target X and target Y
         follow(tx, ty) {
 
+            let dir = {
+                x: tx - this.a.x,
+                y: ty - this.a.y
+            } // target - a
 
-            let dir, targetX, targetY
+            this.angle = Math.atan2(dir.y, dir.x)
+            let currentMagnitude = Math.sqrt(dir.x * dir.x + dir.y * dir.y)
+            //updates vector Magnitude
+            dir.x = dir.x * this.len / currentMagnitude
+            dir.y = dir.y * this.len / currentMagnitude
+            //invert vector direction
+            dir.x *= -1
+            dir.y *= -1
 
-            if (tx === undefined && ty === undefined) {
-                dir = {
-                    x: tx - this.a.x,
-                    y: ty - this.a.y
-                }
-            } else {
-                if(!this.child) debugger
-              targetX = this.child.a.x
-              targetY = this.child.a.y  
-              this.follow(targetX, targetY)
-            }
-
-//check error here
-            if (tx && ty) {
-                this.angle = Math.atan2(dir.y, dir.x)
-
-                //current Magnitude. (length of the vector)
-                let currentMagnitude = Math.sqrt(dir.x * dir.x + dir.y * dir.y)
-                //updates vector Magnitude
-                dir.x = dir.x * this.len / currentMagnitude
-                dir.y = dir.y * this.len / currentMagnitude
-                //invert vector direction
-                dir.x *= -1
-                dir.y *= -1
-
-                //actualizacion del punto A
-                this.a = {
-                    x: tx + dir.x,
-                    y: ty + dir.y
-                }
+            this.a = {
+                x: tx + dir.x,
+                y: ty + dir.y
             }
 
 
-        }
-        update() {
-            this.calculateB()
         }
 
         paintHelp() {
@@ -123,79 +103,51 @@ function inverseKinematic() {
             this.ctx.stroke()
         }
         show() {
-            // this.ctx.fillRect(0, 0, 500, 500)
+            this.calculateB()
             this.paingLine()
             // this.paintHelp()
         }
     }
 
-    // let seg2 = new Segment({ parent: seg, len: 100, angle: 10, ctx })
-    let current = new Segment({ x: 200, y: 300, len: 100, angle: -45, ctx })
-
-    for (let i = 0; i < 3; i++) {
-        let next = new Segment({ parent: current, len: 100, angle: 1, ctx })
-        current.child = next
-        current = next
+    let create = () => {
+        let current = new Segment({ x: 400, y: 400, len: 10, ctx, id: -1, stokeWeight: 0 })
+        for (let i = 0; i < 20; i++) {
+            let next = new Segment({ parent: current, len: 10, ctx, id: i, stokeWeight: Math.ceil(i / 2) })
+            current.child = next
+            current = next
+        }
+        tail = current; // saved the last one
     }
-
-    seg = current
 
     //general update.
     const update = () => {
         ctx.fillStyle = '#515151'
+        //reset canvas each frame before paint it
         ctx.fillRect(0, 0, 500, 500)
 
-        let next = seg
-        next.follow(mouseX, mouseY)
-        next = next.parent
+        //tail is the last one
+        tail.follow(mouseX, mouseY)
+        tail.show()
+        let next = tail.parent
+        //this runs the segment backwards
         while (next != null) {
-            next.update()
+            if (next.child === null) debugger
+            next.follow(next.child.a.x, next.child.a.y)
             next.show()
-            next.follow()
             next = next.parent
         }
 
-        // seg.update()
-        // seg.show()
-
-        // seg2.follow(mouseX, mouseY)
-        // seg2.update()
-        // seg2.show()
-
-        // seg2.follow(mouseX, mouseY)
-        // seg.follow(seg2.a.x, seg2.a.y)
         setTimeout(update, 16);
     };
 
-    //canvas size update.
-    // function resize() {
-    //     canvas.setAttribute('width', window.innerWidth);
-    //     canvas.setAttribute('height', window.innerHeight);
-
-    //     canvasHeight = window.innerHeight
-    //     canvasWidth = window.innerWidth
-    // }
-
     (function () {
-        // window.onresize = debounce(resize);
-        // resize();
         canvas.addEventListener('mousemove', (event) => {
             mouseX = event.offsetX
             mouseY = event.offsetY
         });
-        // for (let i = 0; i < dropsAmount; i++) {
-        //     drops.push(new Drop());
-        // }
-
-        // // first render
-        // for (let i = 0; i < dropsAmount; i++) {
-        //     drops.forEach((drop) => {
-        //         drop.update();
-        //     });
-        // }
-
-        update();
-    })();
+        create()
+        update()
+    })()
 
 }
 
